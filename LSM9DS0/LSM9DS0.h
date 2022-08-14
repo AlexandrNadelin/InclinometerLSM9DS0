@@ -171,16 +171,19 @@ enum mag_odr{
 	M_ODR_100,	// 100 Hz (0x05)
 };                        
 
-typedef enum{
-	/*LSM9DS0InitStage1,
-	LSM9DS0InitStage2,
-	LSM9DS0InitStage3,
-	LSM9DS0InitStage4,
-	LSM9DS0InitStage5,
-	LSM9DS0InitStage6,*/
+/*typedef enum{
 	LSM9DS0ReadyToRead,
 	LSM9DS0ReadNumFifoElem,
 	LSM9DS0ReadVectors,
+	LSM9DS0ReadTemperature,
+	LSM9DS0Error,
+}LSM9DS0ReadStage;*/
+typedef enum{
+	LSM9DS0ReadyToRead,
+	LSM9DS0ReadNumFifoElemAccelerometer,
+	LSM9DS0ReadVectorsAccelerometer,
+	LSM9DS0ReadNumFifoElemMagnetometer,
+	LSM9DS0ReadVectorsMagnetometer,
 	LSM9DS0ReadTemperature,
 	LSM9DS0Error,
 }LSM9DS0ReadStage;
@@ -194,14 +197,16 @@ typedef struct{
 	
 	//uint8_t address;//0x1D - MISO/ASEL pin low; 0x53 - MISO/ASEL pin high.
 	uint8_t devID;
-	//uint8_t amplitudeRange; always 10g it is enough
+	//uint8_t amplitudeRange; always 10g Magnetometerit is enough
 	uint8_t isConnected;
 	
 	LSM9DS0ReadStage readStage;
 	uint8_t temperatureCode[2];
-	uint8_t numberOfFIFOElem;
+	uint8_t numberOfFIFOElemAccelerometer;
+	uint8_t numberOfFIFOElemMagnetometer;
 	uint8_t currentFIFOElem;	
-  float adxl_Vector[3];	
+  float adxl_AccelVector[3];	
+  float adxl_MagVector[3];
 	
 }LSM9DS0;
 
@@ -209,7 +214,7 @@ typedef struct{
 HAL_StatusTypeDef LSM9DS0_Init(LSM9DS0* lsm9ds0);
 void LSM9DS0_Loop(LSM9DS0* lsm9ds0);
 
-void adxlVectorReceiveCallback(float lsm9ds0_Vector[3]);
+void adxlAccelVectorReceiveCallback(float lsm9ds0_Vector[3]);
 void adxlTemperatureReceiveCallback(float temperature);
 
 #endif

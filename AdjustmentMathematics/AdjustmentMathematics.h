@@ -13,14 +13,25 @@ typedef struct{
 typedef struct{
 	float Pitch;               //Тангаж
 	float Roll;                //Крен
-	float AccelerationX;       //Ускорение по оси X
-	float AccelerationY;       //Ускорение по оси Y
-	float AccelerationZ;       //Ускорение по оси Z
-	float Temperature;         //Температура датчика
-	float AccelerationRAWX;    //Ускорение по оси X до выполнения корректировки
-	float AccelerationRAWY;    //Ускорение по оси Y до выполнения корректировки
-	float AccelerationRAWZ;    //Ускорение по оси Z до выполнения корректировки
-	float VibroAcceleratuonRMS;//Ускорение по оси X до выполнения корректировки
+	float AccelerationX;       //Ускорение по оси X [g]
+	float AccelerationY;       //Ускорение по оси Y [g]
+	float AccelerationZ;       //Ускорение по оси Z [g]
+	float Temperature;         //Температура датчика [град]
+	float AccelerationRAWX;    //Ускорение по оси X до выполнения корректировки [g]
+	float AccelerationRAWY;    //Ускорение по оси Y до выполнения корректировки [g]
+	float AccelerationRAWZ;    //Ускорение по оси Z до выполнения корректировки [g]
+	float VibroAcceleratuonRMS;//Ускорение по оси X до выполнения корректировки [g]
+	
+	//Данные магнитометра
+	float MagnetometerRAWX;    //Напряженность магнитного поля по оси X до выполнения корректировки [гаусс]
+	float MagnetometerRAWY;    //Напряженность магнитного поля по оси Y до выполнения корректировки [гаусс]
+	float MagnetometerRAWZ;    //Напряженность магнитного поля по оси Z до выполнения корректировки [гаусс]
+	
+	float MagnetometerX;    //Напряженность магнитного поля по оси X [гаусс]
+	float MagnetometerY;    //Напряженность магнитного поля по оси Y [гаусс]
+	float MagnetometerZ;    //Напряженность магнитного поля по оси Z [гаусс]
+	
+	float MagnetometerRMS;    //Ускорение по оси X до выполнения корректировки [гаусс]
 }InclinometrData;
 
 

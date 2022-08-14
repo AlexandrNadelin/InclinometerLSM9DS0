@@ -1,9 +1,25 @@
 #include "LSM9DS0.h"
 #include "TimeSpan.h"
 
+//---delete---//
 uint16_t lsm9ds0ErrorCounter=0;
 
-__weak void adxlVectorReceiveCallback(float adxl357_Vector[3])
+typedef struct{
+	int16_t x;
+	int16_t y;
+	int16_t z;
+}Point;
+
+Point accelerometrDataArray[33];
+Point magnetometerDataArray[33];
+
+//-----------------------------//
+
+__weak void adxlAccelVectorReceiveCallback(float adxl357_Vector[3])
+{
+	
+}
+__weak void adxlMagVectorReceiveCallback(float adxl357_Vector[3])
 {
 	
 }
@@ -25,16 +41,16 @@ void _rxCpltCallback(void* _lsm9ds0)
 		float temperature = (lsm9ds0->temperatureCode[1]<<8)|lsm9ds0->temperatureCode[0];//((int)((lsm9ds0->temperatureCode[0]&0x0F)<<8 | lsm9ds0->temperatureCode[1]) - 1852)/-9.05F + 25.0F;		
 		adxlTemperatureReceiveCallback(temperature);
 		
-		lsm9ds0->readStage = LSM9DS0ReadNumFifoElem;
-		HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1,FIFO_SRC_REG,1,&lsm9ds0->numberOfFIFOElem,1);
+		lsm9ds0->readStage = LSM9DS0ReadNumFifoElemAccelerometer;
+		HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1,FIFO_SRC_REG,1,&lsm9ds0->numberOfFIFOElemAccelerometer,1);
 		/*lsm9ds0->readStage = LSM9DS0ReadVectors;
 		HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1,OUT_X_L_A|0x80,1,vectorCode,6);*/
 	}
-	else if(lsm9ds0->readStage == LSM9DS0ReadNumFifoElem)
+	else if(lsm9ds0->readStage == LSM9DS0ReadNumFifoElemAccelerometer)
 	{		
-		lsm9ds0->numberOfFIFOElem = lsm9ds0->numberOfFIFOElem&0x1F;
+		lsm9ds0->numberOfFIFOElemAccelerometer = lsm9ds0->numberOfFIFOElemAccelerometer&0x1F;
 		
-		if(lsm9ds0->numberOfFIFOElem==0)//произошел удар, защита
+		if(lsm9ds0->numberOfFIFOElemAccelerometer==0)//произошел удар, защита
 		{
 			/*lsm9ds0->readStage = LSM9DS0InitStage1;//LSM9DS0ReadyToRead;
 			regState = 0x40|0x1F;//Stream mode, FIFO watermark level - 20//0x7F;//Stream-to-FIFO mode, FIFO watermark level - 32
@@ -44,23 +60,47 @@ void _rxCpltCallback(void* _lsm9ds0)
 			return;
 		}		
 		
-		if(lsm9ds0->numberOfFIFOElem>31)lsm9ds0ErrorCounter++;	
+		if(lsm9ds0->numberOfFIFOElemAccelerometer>31)lsm9ds0ErrorCounter++;	
 		
 		lsm9ds0->currentFIFOElem=0;
-		lsm9ds0->readStage = LSM9DS0ReadVectors;
+		lsm9ds0->readStage = LSM9DS0ReadVectorsAccelerometer;
 		HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1,OUT_X_L_A|0x80,1,vectorCode,6);
 		//lsm9ds0->status = HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1, ADXL357_FIFO_DATA,I2C_MEMADD_SIZE_8BIT,vectorCode,9);
 	}
-	else if(lsm9ds0->readStage == LSM9DS0ReadVectors)
+	else if(lsm9ds0->readStage == LSM9DS0ReadVectorsAccelerometer)
 	{								
-		lsm9ds0->adxl_Vector[0] = (int16_t)((vectorCode[1]<<8)|vectorCode[0])*2.0F/32767.0F;
-		lsm9ds0->adxl_Vector[1] = (int16_t)((vectorCode[3]<<8)|vectorCode[2])*2.0F/32767.0F;
-		lsm9ds0->adxl_Vector[2] = (int16_t)((vectorCode[5]<<8)|vectorCode[4])*2.0F/32767.0F;
-		adxlVectorReceiveCallback(lsm9ds0->adxl_Vector);
+		lsm9ds0->adxl_AccelVector[0] = (int16_t)((vectorCode[1]<<8)|vectorCode[0])*2.0F/32767.0F;
+		lsm9ds0->adxl_AccelVector[1] = (int16_t)((vectorCode[3]<<8)|vectorCode[2])*2.0F/32767.0F;
+		lsm9ds0->adxl_AccelVector[2] = (int16_t)((vectorCode[5]<<8)|vectorCode[4])*2.0F/32767.0F;
+		adxlAccelVectorReceiveCallback(lsm9ds0->adxl_AccelVector);
 		
-		if(++lsm9ds0->currentFIFOElem<lsm9ds0->numberOfFIFOElem)HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1,OUT_X_L_A|0x80,1,vectorCode,6);//lsm9ds0->status = HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1, ADXL357_FIFO_DATA,I2C_MEMADD_SIZE_8BIT,vectorCode,9);
-		else lsm9ds0->readStage = LSM9DS0ReadyToRead;
+		accelerometrDataArray[lsm9ds0->currentFIFOElem].x=(int16_t)((vectorCode[1]<<8)|vectorCode[0]);
+		accelerometrDataArray[lsm9ds0->currentFIFOElem].y=(int16_t)((vectorCode[3]<<8)|vectorCode[2]);
+		accelerometrDataArray[lsm9ds0->currentFIFOElem].z=(int16_t)((vectorCode[5]<<8)|vectorCode[4]);
+		
+		if(++lsm9ds0->currentFIFOElem<lsm9ds0->numberOfFIFOElemAccelerometer)HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1,OUT_X_L_A|0x80,1,vectorCode,6);//lsm9ds0->status = HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1, ADXL357_FIFO_DATA,I2C_MEMADD_SIZE_8BIT,vectorCode,9);
+		else //lsm9ds0->readStage = LSM9DS0ReadyToRead;
+		{
+			lsm9ds0->currentFIFOElem=0;
+			lsm9ds0->readStage = LSM9DS0ReadVectorsMagnetometer;
+			HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1,OUT_X_L_M|0x80,1,vectorCode,6);//Дальше читаем показания магнитометра с учетом того что в оччереди столько же элементов
+		}
 	}	
+	//Магнитометр
+	else if(lsm9ds0->readStage == LSM9DS0ReadVectorsMagnetometer)
+	{								
+		lsm9ds0->adxl_MagVector[0] = (int16_t)((vectorCode[1]<<8)|vectorCode[0])*2.0F/32767.0F;
+		lsm9ds0->adxl_MagVector[1] = (int16_t)((vectorCode[3]<<8)|vectorCode[2])*2.0F/32767.0F;
+		lsm9ds0->adxl_MagVector[2] = (int16_t)((vectorCode[5]<<8)|vectorCode[4])*2.0F/32767.0F;
+		adxlMagVectorReceiveCallback(lsm9ds0->adxl_MagVector);
+		
+		magnetometerDataArray[lsm9ds0->currentFIFOElem].x=(int16_t)((vectorCode[1]<<8)|vectorCode[0]);
+		magnetometerDataArray[lsm9ds0->currentFIFOElem].y=(int16_t)((vectorCode[3]<<8)|vectorCode[2]);
+		magnetometerDataArray[lsm9ds0->currentFIFOElem].z=(int16_t)((vectorCode[5]<<8)|vectorCode[4]);
+		
+		if(++lsm9ds0->currentFIFOElem<lsm9ds0->numberOfFIFOElemAccelerometer)HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1,OUT_X_L_M|0x80,1,vectorCode,6);//lsm9ds0->status = HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1, ADXL357_FIFO_DATA,I2C_MEMADD_SIZE_8BIT,vectorCode,9);
+		else lsm9ds0->readStage = LSM9DS0ReadyToRead;
+	}
 	/*else if(lsm9ds0->readStage == LSM9DS0InitStage1)
 	{	
 		lsm9ds0->readStage = LSM9DS0InitStage2;
@@ -104,7 +144,7 @@ HAL_StatusTypeDef LSM9DS0_Init(LSM9DS0* lsm9ds0)
 	//lsm9ds0->amplitudeRange=0x02;//2g//0x08;//8g
 	lsm9ds0->isConnected=0;
 	lsm9ds0->devID=0x00;
-	lsm9ds0->numberOfFIFOElem =0x00;
+	lsm9ds0->numberOfFIFOElemAccelerometer =0x00;
 	lsm9ds0->rxCpltCallback=_rxCpltCallback;
 	lsm9ds0->readStage = LSM9DS0ReadyToRead;
 	
@@ -174,6 +214,8 @@ HAL_StatusTypeDef LSM9DS0_Init(LSM9DS0* lsm9ds0)
   //---Конец инициализации акселерометра---//
 		
 	//---Инициализация датчика температуры---//
+	regState = 0x01<<5;//Разрешение датчика магнитного поля 4 Гаусса
+	lsm9ds0->status = HAL_I2C_Mem_Write(lsm9ds0->i2c,X_M_ADDRESS<<1,CTRL_REG6_XM,1,&regState,1,100);
 	regState = 0x80|0x60|0x14|0x00;//Включаем датчик температуры, устанавливаем высокое разрешение датчика магнитного поля, устанавливаем частоту измерения температуры и магнитного поля 100Гц, Lutch interrupt request disabled
 	lsm9ds0->status = HAL_I2C_Mem_Write(lsm9ds0->i2c,X_M_ADDRESS<<1,CTRL_REG5_XM,1,&regState,1,100);
 	//---Конец инициализации датчика температуры---//
@@ -196,7 +238,7 @@ void LSM9DS0_Loop(LSM9DS0* lsm9ds0)
 		return;
 	}
 	
-	if(GetTimeSpan(lastReadDataTime, HAL_GetTick())>100)//Время заполнения буфера 96/3 = 32 - 256 мс, чтобы не опрашивать постоянно - опрашиваем с интервалом 100 мс
+	if(GetTimeSpan(lastReadDataTime, HAL_GetTick())>50)//Время заполнения буфера 96/3 = 32 - 256 мс, чтобы не опрашивать постоянно - опрашиваем с интервалом 100 мс
 	{
 		lastReadDataTime = HAL_GetTick();
 		if(lsm9ds0->readStage == LSM9DS0ReadyToRead || GetTimeSpan(lastReadyToReadTime, HAL_GetTick())>500)

@@ -149,7 +149,7 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 	}
 }
 
-void adxlVectorReceiveCallback(float adxl357_Vector[3])
+void adxlAccelVectorReceiveCallback(float adxl357_Vector[3])
 {
 	static uint8_t isVectorAlreadyReceived = 0;
 	
