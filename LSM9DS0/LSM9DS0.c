@@ -245,7 +245,7 @@ void LSM9DS0_Loop(LSM9DS0* lsm9ds0)
 		{	
 			lastReadyToReadTime = HAL_GetTick();
 			lsm9ds0->readStage = LSM9DS0ReadTemperature;
-		  lsm9ds0->status = HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1, OUT_TEMP_L_XM|0x80,I2C_MEMADD_SIZE_8BIT,lsm9ds0->temperatureCode,1);
+		  lsm9ds0->status = HAL_I2C_Mem_Read_IT(lsm9ds0->i2c,X_M_ADDRESS<<1, OUT_TEMP_L_XM|0x80,I2C_MEMADD_SIZE_8BIT,lsm9ds0->temperatureCode,2);
 		}
 	}
 }
